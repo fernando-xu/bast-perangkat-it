@@ -41,7 +41,10 @@ export default function BastList() {
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
-      <div className="mb-6 flex flex-wrap items-end justify-between gap-4">
+      <Link href="/" className="text-sm text-slate-500 hover:text-slate-800">
+        ← Semua form
+      </Link>
+      <div className="mb-6 mt-2 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-xs font-medium uppercase tracking-wider text-slate-500">FRM.IT.003 · Rev02</p>
           <h1 className="text-2xl font-semibold tracking-tight">Berita Acara Serah Terima Perangkat IT</h1>

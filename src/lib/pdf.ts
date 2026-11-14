@@ -11,7 +11,7 @@ const LOCAL_CHROME = [
   "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe",
 ].filter(Boolean) as string[];
 
-async function launch(): Promise<Browser> {
+export async function launch(): Promise<Browser> {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME) {
     const chromium = (await import("@sparticuz/chromium")).default;
     return puppeteer.launch({
