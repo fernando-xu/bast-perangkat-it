@@ -116,9 +116,12 @@ new[18] = keep_runs(paras[18], 2, run(' ') + V('lama_merk'))
 new[20] = keep_runs(paras[20], 4, V('lama_spek1'))
 new[21] = keep_runs(paras[21], 4, V('lama_spek2'))
 new[22] = keep_runs(paras[22], 4, V('lama_kelengkapan'))
-new[25] = keep_runs(paras[25], 4, V('keterangan'))
-new[26] = keep_runs(paras[26], 5, V('keterangan2'))
-new[27] = keep_runs(paras[27], 3, V('keterangan3'))
+# Keterangan is one free paragraph: hanging indent so wrapped lines align with
+# the text after "Keterangan<tab><tab>: " (colon sits on the 2160 default tab stop).
+p25 = paras[25].replace('<w:contextualSpacing/>', '<w:ind w:left="2340" w:hanging="2340"/><w:contextualSpacing/>', 1)
+new[25] = keep_runs(p25, 4, V('keterangan'))
+new[26] = ''  # former continuation lines, no longer used
+new[27] = ''
 
 # Signature table 1 (Diterima / Diserahkan / Diketahui)
 for idx, key in ((33, 'tgl_terima'), (34, 'tgl_serah'), (37, 'tgl_tahu')):

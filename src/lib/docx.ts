@@ -7,6 +7,7 @@ import {
   DEVICE_TYPES,
   CONDITIONS,
   formatTanggal,
+  merkSn,
   noBast,
 } from "./schema";
 
@@ -20,7 +21,7 @@ export function templateValues(b: Bast): Record<string, string> {
   const v: Record<string, string> = {
     no_bast: noBast(b),
     kode: b.kode,
-    merk: b.merk,
+    merk: merkSn(b.merk, b.sn),
     spek1: b.spek1,
     spek2: b.spek2,
     spek3: b.spek3,
@@ -30,23 +31,21 @@ export function templateValues(b: Bast): Record<string, string> {
     perusahaan: b.perusahaan,
     departemen: b.departemen,
     lama_kode: b.perangkatLama ? b.lamaKode : "",
-    lama_merk: b.perangkatLama ? b.lamaMerk : "",
+    lama_merk: b.perangkatLama ? merkSn(b.lamaMerk, b.lamaSn) : "",
     lama_spek1: b.perangkatLama ? b.lamaSpek1 : "",
     lama_spek2: b.perangkatLama ? b.lamaSpek2 : "",
     lama_kelengkapan: b.perangkatLama ? b.lamaKelengkapan : "",
-    keterangan: b.keterangan,
-    keterangan2: b.keterangan2,
-    keterangan3: b.keterangan3,
+    keterangan: b.keterangan.trim(),
     tgl_terima: formatTanggal(b.tglTerima),
     tgl_serah: formatTanggal(b.tglSerah),
     tgl_tahu: formatTanggal(b.tglTahu),
-    nama_terima: b.namaTerima,
-    nama_serah: b.namaSerah,
+    nama_terima: b.penerima,
+    nama_serah: b.namaIT,
     nama_tahu: b.namaTahu,
     tgl2_tahu: formatTanggal(b.tgl2Tahu),
-    nama2_terima: b.nama2Terima,
-    nama2_info: b.nama2Info,
-    nama2_tahu: b.nama2Tahu,
+    nama2_terima: b.penerima,
+    nama2_info: b.namaIT,
+    nama2_tahu: b.namaTahu,
     "cv:lama_ada": b.perangkatLama ? "1" : "0",
     "cv:lama_tidak": b.perangkatLama ? "0" : "1",
     "cb:lama_ada": b.perangkatLama ? "☒" : "☐",
@@ -95,7 +94,8 @@ function fill(xml: string, b: Bast) {
   const values = templateValues(b);
   xml = xml.replace(/\{\{([\w:]+)\}\}/g, (_m, key: string) => {
     if (!(key in values)) throw new Error(`unknown placeholder ${key}`);
-    return esc(values[key]);
+    // Line breaks typed in a textarea (Keterangan) become Word line breaks.
+    return esc(values[key]).replace(/\r?\n/g, '</w:t><w:br/><w:t xml:space="preserve">');
   });
   return xml;
 }

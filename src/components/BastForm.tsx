@@ -38,13 +38,7 @@ export default function BastForm({ id, initial }: Props) {
   function set<K extends keyof Bast>(key: K, value: Bast[K]) {
     setDirty(true);
     setB((prev) => {
-      const next = { ...prev, [key]: value };
-      // keep signature names in sync with "Penerima" until edited separately
-      if (key === "penerima") {
-        if (prev.namaTerima === prev.penerima) next.namaTerima = value as string;
-        if (prev.nama2Terima === prev.penerima) next.nama2Terima = value as string;
-      }
-      return next;
+      return { ...prev, [key]: value };
     });
   }
 
@@ -176,10 +170,11 @@ export default function BastForm({ id, initial }: Props) {
             <Segmented options={CONDITIONS} value={b.jenis} onChange={(v) => set("jenis", v)} />
           </Field>
           <Text label="Kode Perangkat" v={b.kode} on={(v) => set("kode", v)} />
-          <Text label="Merk / Spesifikasi / SN" v={b.merk} on={(v) => set("merk", v)} placeholder="Lenovo V14 S/N. PF2MZJP9" />
-          <Text label="Spesifikasi (baris 2)" v={b.spek1} on={(v) => set("spek1", v)} placeholder="Intel i5 RAM 16GB SSD 512GB" />
-          <Text label="Spesifikasi (baris 3)" v={b.spek2} on={(v) => set("spek2", v)} placeholder="Windows 11 PRO, Office" />
-          <Text label="Spesifikasi (baris 4)" v={b.spek3} on={(v) => set("spek3", v)} />
+          <Text label="Merk / Tipe" v={b.merk} on={(v) => set("merk", v)} placeholder="Lenovo V14IL" />
+          <Text label="Serial Number (SN)" v={b.sn} on={(v) => set("sn", v)} placeholder="PF2MZJP9" />
+          <Text label="Spesifikasi (baris 1)" v={b.spek1} on={(v) => set("spek1", v)} placeholder="Intel i5 RAM 16GB SSD 512GB" />
+          <Text label="Spesifikasi (baris 2)" v={b.spek2} on={(v) => set("spek2", v)} placeholder="Windows 11 PRO, Office" />
+          <Text label="Spesifikasi (baris 3)" v={b.spek3} on={(v) => set("spek3", v)} />
           <Text label="Kelengkapan" v={b.kelengkapan} on={(v) => set("kelengkapan", v)} placeholder="Unit, Charger Adapter" />
           <Text label="Lokasi" v={b.lokasi} on={(v) => set("lokasi", v)} />
         </div>
@@ -202,27 +197,44 @@ export default function BastForm({ id, initial }: Props) {
         {lama && (
           <div className="mt-4 grid gap-4 sm:grid-cols-2">
             <Text label="Kode Perangkat (lama)" v={b.lamaKode} on={(v) => set("lamaKode", v)} />
-            <Text label="Merk / Spesifikasi / SN (lama)" v={b.lamaMerk} on={(v) => set("lamaMerk", v)} />
-            <Text label="Spesifikasi (lama, baris 2)" v={b.lamaSpek1} on={(v) => set("lamaSpek1", v)} />
-            <Text label="Spesifikasi (lama, baris 3)" v={b.lamaSpek2} on={(v) => set("lamaSpek2", v)} />
+            <Text label="Merk / Tipe (lama)" v={b.lamaMerk} on={(v) => set("lamaMerk", v)} />
+            <Text label="Serial Number (lama)" v={b.lamaSn} on={(v) => set("lamaSn", v)} />
+            <Text label="Spesifikasi (lama, baris 1)" v={b.lamaSpek1} on={(v) => set("lamaSpek1", v)} />
+            <Text label="Spesifikasi (lama, baris 2)" v={b.lamaSpek2} on={(v) => set("lamaSpek2", v)} />
             <Text label="Kelengkapan (lama)" v={b.lamaKelengkapan} on={(v) => set("lamaKelengkapan", v)} />
           </div>
         )}
       </Section>
 
       <Section title="Keterangan">
-        <div className="grid gap-3">
-          <input className="input" value={b.keterangan} onChange={(e) => set("keterangan", e.target.value)} placeholder="Baris 1" />
-          <input className="input" value={b.keterangan2} onChange={(e) => set("keterangan2", e.target.value)} placeholder="Baris 2" />
-          <input className="input" value={b.keterangan3} onChange={(e) => set("keterangan3", e.target.value)} placeholder="Baris 3" />
-        </div>
+        <textarea
+          className="input min-h-28 resize-y leading-relaxed"
+          aria-label="Keterangan"
+          maxLength={400}
+          value={b.keterangan}
+          onChange={(e) => set("keterangan", e.target.value)}
+          placeholder="Contoh: Pengadaan PC Set untuk tim Finance menggantikan laptop lama yang sudah rusak."
+        />
+        <p className="mt-1 text-right text-xs text-slate-500">{b.keterangan.length}/400</p>
       </Section>
 
-      <Section title="Tanda tangan serah terima" hint="Halaman 1">
+      <Section title="Penandatangan" hint="Nama dipakai di tabel tanda tangan halaman 1 dan 2">
         <div className="grid gap-4 sm:grid-cols-3">
-          <SignCol title="Diterima Oleh (User / PIC)" tgl={b.tglTerima} nama={b.namaTerima} onTgl={(v) => set("tglTerima", v)} onNama={(v) => set("namaTerima", v)} />
-          <SignCol title="Diserahkan Oleh (IT In Charge)" tgl={b.tglSerah} nama={b.namaSerah} onTgl={(v) => set("tglSerah", v)} onNama={(v) => set("namaSerah", v)} />
-          <SignCol title="Diketahui Oleh (IT / HR)" tgl={b.tglTahu} nama={b.namaTahu} onTgl={(v) => set("tglTahu", v)} onNama={(v) => set("namaTahu", v)} />
+          <SignCol title="Penerima (User / PIC)">
+            <Field label="Nama">
+              <div className="input bg-slate-50 text-slate-700">{b.penerima || <span className="text-slate-400">Isi di bagian Penerima</span>}</div>
+            </Field>
+            <DateField label="Tanggal diterima" v={b.tglTerima} on={(v) => set("tglTerima", v)} />
+          </SignCol>
+          <SignCol title="IT In Charge">
+            <Text label="Nama" v={b.namaIT} on={(v) => set("namaIT", v)} />
+            <DateField label="Tanggal diserahkan" v={b.tglSerah} on={(v) => set("tglSerah", v)} />
+          </SignCol>
+          <SignCol title="Mengetahui (IT / HR)">
+            <Text label="Nama" v={b.namaTahu} on={(v) => set("namaTahu", v)} />
+            <DateField label="Tanggal (halaman 1)" v={b.tglTahu} on={(v) => set("tglTahu", v)} />
+            <DateField label="Tanggal (halaman 2)" v={b.tgl2Tahu} on={(v) => set("tgl2Tahu", v)} />
+          </SignCol>
         </div>
       </Section>
 
@@ -305,13 +317,6 @@ export default function BastForm({ id, initial }: Props) {
         )}
       </Section>
 
-      <Section title="Tanda tangan pengecekan" hint="Halaman 2">
-        <div className="grid gap-4 sm:grid-cols-3">
-          <SignCol title="Diterima Oleh (User / PIC)" nama={b.nama2Terima} onNama={(v) => set("nama2Terima", v)} />
-          <SignCol title="Diinformasikan Oleh (IT In Charge)" nama={b.nama2Info} onNama={(v) => set("nama2Info", v)} />
-          <SignCol title="Diketahui Oleh (IT / HR)" tgl={b.tgl2Tahu} nama={b.nama2Tahu} onTgl={(v) => set("tgl2Tahu", v)} onNama={(v) => set("nama2Tahu", v)} />
-        </div>
-      </Section>
 
       <div className="fixed inset-x-0 bottom-0 z-10 border-t border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex max-w-4xl flex-wrap items-center gap-2 px-4 py-3 sm:px-6">
@@ -401,20 +406,19 @@ function Segmented<T extends string>({ options, value, onChange }: { options: re
   );
 }
 
-function SignCol({ title, tgl, nama, onTgl, onNama }: { title: string; tgl?: string; nama: string; onTgl?: (v: string) => void; onNama: (v: string) => void }) {
+function SignCol({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-lg border border-slate-200 p-3">
-      <div className="mb-2 text-sm font-medium">{title}</div>
-      {onTgl && (
-        <Field label="Tanggal">
-          <input type="date" className="input" value={tgl ?? ""} onChange={(e) => onTgl(e.target.value)} />
-        </Field>
-      )}
-      <div className={onTgl ? "mt-2" : ""}>
-        <Field label="Nama">
-          <input className="input" value={nama} onChange={(e) => onNama(e.target.value)} />
-        </Field>
-      </div>
+    <div className="space-y-2 rounded-lg border border-slate-200 p-3">
+      <div className="text-sm font-medium">{title}</div>
+      {children}
     </div>
+  );
+}
+
+function DateField({ label, v, on }: { label: string; v: string; on: (v: string) => void }) {
+  return (
+    <Field label={label}>
+      <input type="date" className="input" value={v} onChange={(e) => on(e.target.value)} />
+    </Field>
   );
 }

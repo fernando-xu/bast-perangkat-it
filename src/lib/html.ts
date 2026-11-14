@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import PizZip from "pizzip";
-import { type Bast, CHECKLIST_ROWS, CONDITIONS, DEVICE_TYPES, formatTanggal, noBast } from "./schema";
+import { type Bast, CHECKLIST_ROWS, CONDITIONS, DEVICE_TYPES, formatTanggal, merkSn, noBast } from "./schema";
 
 /**
  * HTML replica of the BAST Word form, used to produce the PDF.
@@ -54,6 +54,11 @@ function options(opts: readonly string[], selected: string) {
 function field(label: string, value: string, sub?: string) {
   return `<div class="row"><div class="lbl">${e(label)}${sub ? `<div class="sub">${e(sub)}</div>` : ""}</div><div class="colon">:</div><div class="val">${e(value) || "&nbsp;"}</div></div>`;
 }
+/** Free-text paragraph: wrapped lines align after the colon, each line dotted-underlined. */
+function paragraph(label: string, value: string) {
+  if (!value) return field(label, "");
+  return `<div class="row para"><div class="lbl">${e(label)}</div><div class="colon">:</div><div class="val plain"><span>${e(value)}</span></div></div>`;
+}
 function cont(value: string) {
   return `<div class="row"><div class="lbl"></div><div class="colon">:</div><div class="val">${e(value) || "&nbsp;"}</div></div>`;
 }
@@ -98,6 +103,10 @@ footer { position: absolute; right: 20mm; bottom: 12.5mm; font-size: 8pt; }
 .colon { padding-bottom: 1px; }
 .val { border-bottom: 1px dotted #000; padding: 0 2px 1px; min-height: 5.5mm; }
 .val.plain { border-bottom: none; }
+.row.para { align-items: start; }
+.row.para .lbl, .row.para .colon { line-height: 7.2mm; }
+.row.para .val { line-height: 7.2mm; white-space: pre-wrap; text-align: justify; }
+.row.para .val span { text-decoration: underline dotted; text-underline-offset: 3px; }
 .note { font-size: 9pt; font-style: italic; padding-left: 56mm; margin: 0.5mm 0 1mm; }
 s { text-decoration: line-through; }
 .chk { display: inline-flex; align-items: center; gap: 4px; margin-right: 32mm; }
@@ -129,7 +138,7 @@ ${header(logo, b)}
 <div class="row"><div class="lbl">Penyerahan<div class="sub">(pilih salah satu)</div></div><div class="colon">:</div><div class="val plain">${options(DEVICE_TYPES, b.penyerahan)}</div></div>
 <div class="row"><div class="lbl">Jenis Perangkat<div class="sub">(pilih salah satu)</div></div><div class="colon">:</div><div class="val plain">${options(CONDITIONS, b.jenis)}</div></div>
 ${field("Kode Perangkat", b.kode)}
-${field("Merk/Spesifikasi/SN", b.merk)}
+${field("Merk/Spesifikasi/SN", merkSn(b.merk, b.sn))}
 ${cont(b.spek1)}
 ${cont(b.spek2)}
 ${cont(b.spek3)}
@@ -141,17 +150,15 @@ ${field("Departement", b.departemen)}
 <div class="row"><div class="lbl">Perangkat Lama</div><div class="colon">:</div><div class="val plain"><span class="chk">${box(lama)} Ada</span><span class="chk">${box(!lama)} Tidak Ada</span></div></div>
 <div class="note">(Jika ada, harap isi pada baris dibawah ini)</div>
 ${field("Kode Perangkat", L(b.lamaKode), "(Perangkat Lama)")}
-${field("Merk/Spesifikasi/SN", L(b.lamaMerk), "(Perangkat Lama)")}
+${field("Merk/Spesifikasi/SN", L(merkSn(b.lamaMerk, b.lamaSn)), "(Perangkat Lama)")}
 ${cont(L(b.lamaSpek1))}
 ${cont(L(b.lamaSpek2))}
 ${field("Kelengkapan", L(b.lamaKelengkapan), "(Perangkat Lama)")}
-${field("Keterangan", b.keterangan)}
-${cont(b.keterangan2)}
-${cont(b.keterangan3)}
+${paragraph("Keterangan", b.keterangan.trim())}
 <div class="lead">Telah dilakukan proses serah terima:</div>
 ${signTable([
-  { title: "Diterima Oleh,", tanggal: formatTanggal(b.tglTerima), nama: b.namaTerima, role: "<i>User /</i> PIC" },
-  { title: "Diserahkan Oleh,", tanggal: formatTanggal(b.tglSerah), nama: b.namaSerah, role: "IT <i>In Charge</i>" },
+  { title: "Diterima Oleh,", tanggal: formatTanggal(b.tglTerima), nama: b.penerima, role: "<i>User /</i> PIC" },
+  { title: "Diserahkan Oleh,", tanggal: formatTanggal(b.tglSerah), nama: b.namaIT, role: "IT <i>In Charge</i>" },
   { title: "Diketahui Oleh,", tanggal: formatTanggal(b.tglTahu), nama: b.namaTahu, role: "IT / HR" },
 ])}
 <footer>halaman 1 dari 2</footer>
@@ -180,9 +187,9 @@ ${header(logo, b)}
 </table>
 <p class="closing">Telah dilakukan proses pengecekan perangkat baru dan penyampaian informasi mengenai kondisi perangkat yang baru.</p>
 ${signTable([
-  { title: "Diterima Oleh,", tanggal: null, nama: b.nama2Terima, role: "<i>User /</i> PIC" },
-  { title: "Diinformasikan Oleh,", tanggal: null, nama: b.nama2Info, role: "IT <i>In Charge</i>" },
-  { title: "Diketahui Oleh,", tanggal: formatTanggal(b.tgl2Tahu), nama: b.nama2Tahu, role: "IT / HR" },
+  { title: "Diterima Oleh,", tanggal: null, nama: b.penerima, role: "<i>User /</i> PIC" },
+  { title: "Diinformasikan Oleh,", tanggal: null, nama: b.namaIT, role: "IT <i>In Charge</i>" },
+  { title: "Diketahui Oleh,", tanggal: formatTanggal(b.tgl2Tahu), nama: b.namaTahu, role: "IT / HR" },
 ])}
 <footer>halaman 2 dari 2</footer>
 </section>`;

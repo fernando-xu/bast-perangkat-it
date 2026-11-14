@@ -40,11 +40,13 @@ export const bastSchema = z.object({
   jenis: z.enum(CONDITIONS),
   kode: str,
   merk: str,
+  sn: str,
   spek1: str,
   spek2: str,
   spek3: str,
   kelengkapan: str,
   lokasi: str,
+  /** Penerima — also printed as "Diterima Oleh" in both signature tables. */
   penerima: str,
   perusahaan: str,
   departemen: str,
@@ -52,25 +54,22 @@ export const bastSchema = z.object({
   perangkatLama: z.boolean().default(false),
   lamaKode: str,
   lamaMerk: str,
+  lamaSn: str,
   lamaSpek1: str,
   lamaSpek2: str,
   lamaKelengkapan: str,
 
-  keterangan: str,
-  keterangan2: str,
-  keterangan3: str,
+  keterangan: z.string().max(400).default(""),
+
+  /** IT In Charge — "Diserahkan Oleh" (page 1) and "Diinformasikan Oleh" (page 2). */
+  namaIT: str,
+  /** IT / HR — "Diketahui Oleh" on both pages. */
+  namaTahu: str,
 
   tglTerima: str,
   tglSerah: str,
   tglTahu: str,
-  namaTerima: str,
-  namaSerah: str,
-  namaTahu: str,
-
   tgl2Tahu: str,
-  nama2Terima: str,
-  nama2Info: str,
-  nama2Tahu: str,
 
   checklist: z.array(checklistItem).max(CHECKLIST_ROWS).default([]),
 });
@@ -88,6 +87,7 @@ export function emptyBast(now = new Date()): Bast {
     jenis: "Baru",
     kode: "",
     merk: "",
+    sn: "",
     spek1: "",
     spek2: "",
     spek3: "",
@@ -99,24 +99,24 @@ export function emptyBast(now = new Date()): Bast {
     perangkatLama: false,
     lamaKode: "",
     lamaMerk: "",
+    lamaSn: "",
     lamaSpek1: "",
     lamaSpek2: "",
     lamaKelengkapan: "",
     keterangan: "",
-    keterangan2: "",
-    keterangan3: "",
+    namaIT: "Yoan A.",
+    namaTahu: "",
     tglTerima: "",
     tglSerah: "",
     tglTahu: "",
-    namaTerima: "",
-    namaSerah: "Yoan A.",
-    namaTahu: "",
     tgl2Tahu: "",
-    nama2Terima: "",
-    nama2Info: "Yoan A.",
-    nama2Tahu: "",
     checklist: DEFAULT_CHECKLIST.map((nama) => ({ nama, kondisi: "", keterangan: "" })),
   };
+}
+
+/** "Lenovo V14" + "PF2MZJP9" -> "Lenovo V14 S/N. PF2MZJP9" (as printed on the form). */
+export function merkSn(merk: string, sn: string) {
+  return [merk.trim(), sn.trim() && `S/N. ${sn.trim()}`].filter(Boolean).join(" ");
 }
 
 export function noBast(b: Pick<Bast, "noUrut" | "lokasiArea" | "bulan" | "tahun">) {
